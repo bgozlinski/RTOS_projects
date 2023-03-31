@@ -29,6 +29,7 @@ bool access() {
 
 // Function to read the RFID tag and check for authorization.
 void taskRFID(void *arg) {
+	unsigned long uid = 0;
 	for (;;) {
 		// Check if a new RFID card is present.
 		if (!rfid.PICC_IsNewCardPresent()) {
@@ -48,7 +49,14 @@ void taskRFID(void *arg) {
 		  Serial.print(rfid.uid.uidByte[i] < 0x10 ? " 0" : " ");
 		  Serial.print(rfid.uid.uidByte[i], HEX);
 		}
+
 		Serial.println();
+
+		for (byte i = 0; i < rfid.uid.size; i++) {
+			uid <<= 8;
+			uid |= rfid.uid.uidByte[i];
+		}
+		Serial.println(uid);
 
 		// Check if the scanned card is authorized.
 		if (access()) {
@@ -85,7 +93,8 @@ void setup() {
 
 	// Create the RFID and LED tasks and assign them to the running core.
 	xTaskCreatePinnedToCore(
-    taskRFID, "rfid", 
+    taskRFID, 
+	"rfid", 
     1024, 
     NULL, 
     2, 
